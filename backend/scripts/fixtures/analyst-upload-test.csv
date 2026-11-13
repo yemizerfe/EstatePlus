@@ -1,0 +1,5 @@
+title,property_type,neighborhood,size_sqm,bedrooms,bathrooms,asking_price,rental_price,listing_date,condition,description,latitude,longitude
+CSV Import Test Apartment Bole,apartment,Bole,110,3,2,7800000,42000,2026-03-14,excellent,Imported from an analyst CSV upload,8.9950,38.7870
+CSV Import Test Villa CMC,villa,CMC,300,5,4,22500000,130000,2026-04-02,new,Imported from an analyst CSV upload,9.0195,38.7620
+CSV Import Test Rental Apartment Gulele,apartment,Gulele,70,2,1,0,18000,2026-05-11,good,Rent-only imported row,9.0450,38.7300
+CSV Import Test Office Kazanchis,office,Kazanchis,160,0,2,11500000,65000,2026-06-01,good,Imported from an analyst CSV upload,9.0130,38.7640

@@ -1,0 +1,60 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.next/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Docker
+.docker/
+
+# Kubernetes secrets (never commit)
+k8s/secrets.yaml
+
+# Uploads / temp
+uploads/
+tmp/
+temp/
+
+# Compiled JS from TS (backend)
+backend/dist/
+
+# Frontend build
+frontend/dist/
+
+# BinaSmart sync progress (per-machine quota bookkeeping)
+backend/.bina-sync-state.json
+
+# Imported source snapshots / local probe output
+backend/uploads/tmp/

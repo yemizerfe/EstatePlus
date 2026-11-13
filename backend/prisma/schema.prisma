@@ -1,0 +1,844 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, uuid_ossp(map: "uuid-ossp")]
+}
+
+model User {
+  id                 String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email              String              @unique @db.VarChar(255)
+  passwordHash       String?             @map("password_hash")
+  firstName          String              @map("first_name") @db.VarChar(100)
+  lastName           String              @map("last_name") @db.VarChar(100)
+  role               UserRole            @default(USER)
+  authProvider       AuthProvider        @default(LOCAL) @map("auth_provider")
+  googleId           String?             @unique @map("google_id") @db.VarChar(255)
+  profilePicture     String?             @map("profile_picture")
+  isActive           Boolean             @default(true) @map("is_active")
+  lastLoginAt        DateTime?           @map("last_login_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  lastPasswordChange DateTime?           @map("last_password_change")
+  securitySettings   Json?               @map("security_settings")
+  microsoftId        String?             @unique @map("microsoft_id") @db.VarChar(255)
+  alertsAcked        Alert[]             @relation("AlertAcknowledgedBy")
+  auditLogs          AuditLog[]
+  documents          PropertyDocument[]  @relation("DocumentOwner")
+  inquiriesReceived  Inquiry[]           @relation("InquiryOwner")
+  inquiriesSent      Inquiry[]           @relation("InquirySender")
+  viewingsHosted     Viewing[]           @relation("ViewingOwner")
+  importJobs         DataImportJob[]
+  dataSources        DataSource[]
+  economicIndicators EconomicIndicator[] @relation("EconomicIndicatorCreator")
+  notifications      Notification[]
+  properties         Property[]
+  propertyHistory    PropertyHistory[]   @relation("PropertyHistoryChangedBy")
+  refreshTokens      RefreshToken[]
+  reports            Report[]
+  savedProperties    SavedProperty[]
+  savedSearches      SavedSearch[]
+  scenarios          Scenario[]
+  valuations         Valuation[]
+
+  @@index([email])
+  @@index([googleId])
+  @@index([microsoftId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Neighborhood {
+  id               String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String                  @unique @db.VarChar(150)
+  slug             String                  @unique @db.VarChar(150)
+  city             String                  @default("Addis Ababa") @db.VarChar(150)
+  description      String?
+  areaSqkm         Decimal?                @map("area_sqkm") @db.Decimal(10, 4)
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  averageIncome    Decimal?                @map("average_income") @db.Decimal(12, 2)
+  centerLat        Decimal?                @map("center_lat") @db.Decimal(10, 8)
+  centerLng        Decimal?                @map("center_lng") @db.Decimal(11, 8)
+  coordinates      Json?
+  establishedYear  Int?                    @map("established_year")
+  isActive         Boolean                 @default(true) @map("is_active")
+  metadata         Json?
+  population       Int?
+  safetyRating     Decimal?                @map("safety_rating") @db.Decimal(3, 2)
+  subcity          String?                 @db.VarChar(150)
+  walkScore        Int?                    @map("walk_score")
+  alerts           Alert[]
+  forecasts        Forecast[]
+  locations        Location[]
+  marketStatistics MarketStatistic[]
+  amenities        NeighborhoodAmenity[]
+  statistics       NeighborhoodStatistic[]
+  properties       Property[]
+  scenarioResults  ScenarioResult[]
+
+  @@index([slug])
+  @@index([city, subcity])
+  @@index([isActive])
+  @@map("neighborhoods")
+}
+
+model Location {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  neighborhoodId String?       @map("neighborhood_id") @db.Uuid
+  address        String?
+  subArea        String?       @map("sub_area") @db.VarChar(150)
+  latitude       Decimal?      @db.Decimal(10, 8)
+  longitude      Decimal?      @db.Decimal(11, 8)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  neighborhood   Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+  properties     Property[]
+
+  @@index([neighborhoodId])
+  @@map("locations")
+}
+
+model NeighborhoodAmenity {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  neighborhoodId String       @map("neighborhood_id") @db.Uuid
+  amenityType    AmenityType  @map("amenity_type")
+  name           String       @db.VarChar(200)
+  description    String?
+  address        String?      @db.VarChar(300)
+  latitude       Decimal?     @db.Decimal(10, 8)
+  longitude      Decimal?     @db.Decimal(11, 8)
+  distance       Int?
+  rating         Decimal?     @db.Decimal(3, 2)
+  verified       Boolean      @default(false)
+  metadata       Json?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+
+  @@index([neighborhoodId, amenityType])
+  @@index([amenityType])
+  @@map("neighborhood_amenities")
+}
+
+model NeighborhoodStatistic {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  neighborhoodId String        @map("neighborhood_id") @db.Uuid
+  period         String        @db.VarChar(7)
+  statisticType  StatisticType @map("statistic_type")
+  value          Decimal       @db.Decimal(15, 4)
+  unit           String?       @db.VarChar(50)
+  metadata       Json?
+  source         String?       @db.VarChar(200)
+  calculatedAt   DateTime      @default(now()) @map("calculated_at")
+  neighborhood   Neighborhood  @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+
+  @@unique([neighborhoodId, period, statisticType])
+  @@index([period])
+  @@index([statisticType])
+  @@map("neighborhood_statistics")
+}
+
+model Property {
+  id              String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title           String             @db.VarChar(255)
+  description     String?
+  propertyType    PropertyType       @map("property_type")
+  condition       PropertyCondition
+  neighborhoodId  String             @map("neighborhood_id") @db.Uuid
+  locationId      String?            @map("location_id") @db.Uuid
+  address         String?
+  latitude        Decimal?           @db.Decimal(10, 8)
+  longitude       Decimal?           @db.Decimal(11, 8)
+  sizeSqm         Decimal            @map("size_sqm") @db.Decimal(10, 2)
+  bedrooms        Int                @default(0) @db.SmallInt
+  bathrooms       Int                @default(0) @db.SmallInt
+  askingPrice     Decimal            @map("asking_price") @db.Decimal(15, 2)
+  rentalPrice     Decimal?           @map("rental_price") @db.Decimal(15, 2)
+  listingDate     DateTime           @map("listing_date") @db.Date
+  status          PropertyStatus     @default(DRAFT)
+  ownerId         String             @map("owner_id") @db.Uuid
+  approvedBy      String?            @map("approved_by") @db.Uuid
+  approvedAt      DateTime?          @map("approved_at")
+  rejectionReason String?            @map("rejection_reason")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  alerts          Alert[]
+  listings        Listing[]
+  documents       PropertyDocument[]
+  inquiries       Inquiry[]
+  viewings        Viewing[]
+  location        Location?          @relation(fields: [locationId], references: [id])
+  neighborhood    Neighborhood       @relation(fields: [neighborhoodId], references: [id])
+  owner           User               @relation(fields: [ownerId], references: [id])
+  history         PropertyHistory[]
+  images          PropertyImage[]
+  savedProperties SavedProperty[]
+  valuations      Valuation[]
+
+  @@index([neighborhoodId])
+  @@index([propertyType])
+  @@index([status])
+  @@index([ownerId])
+  @@index([askingPrice])
+  @@index([listingDate(sort: Desc)])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  imageUrl   String   @map("image_url")
+  altText    String?  @map("alt_text") @db.VarChar(255)
+  isPrimary  Boolean  @default(false) @map("is_primary")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // At most one primary photo per property; other photos are an ordered list.
+  // Enforced by the partial unique index `unique_primary_image` in SQL.
+  @@index([propertyId, isPrimary])
+  @@index([propertyId, sortOrder])
+  @@map("property_images")
+}
+
+model Listing {
+  id            String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId    String                @map("property_id") @db.Uuid
+  listingType   ListingType           @map("listing_type")
+  currentPrice  Decimal               @map("current_price") @db.Decimal(15, 2)
+  originalPrice Decimal               @map("original_price") @db.Decimal(15, 2)
+  rentalPrice   Decimal?              @map("rental_price") @db.Decimal(15, 2)
+  status        ListingStatus         @default(ACTIVE)
+  listedAt      DateTime              @default(now()) @map("listed_at")
+  expiresAt     DateTime?             @map("expires_at")
+  viewCount     Int                   @default(0) @map("view_count")
+  inquiryCount  Int                   @default(0) @map("inquiry_count")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  priceHistory  ListingPriceHistory[]
+  property      Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([listingType])
+  @@index([listedAt(sort: Desc)])
+  @@map("listings")
+}
+
+model ListingPriceHistory {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  listingId    String   @map("listing_id") @db.Uuid
+  oldPrice     Decimal  @map("old_price") @db.Decimal(15, 2)
+  newPrice     Decimal  @map("new_price") @db.Decimal(15, 2)
+  changeReason String?  @map("change_reason") @db.VarChar(255)
+  changedAt    DateTime @default(now()) @map("changed_at")
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([changedAt(sort: Desc)])
+  @@map("listing_price_history")
+}
+
+model SavedProperty {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  propertyId   String   @map("property_id") @db.Uuid
+  notes        String?
+  tags         String[] @default([])
+  savedAt      DateTime @default(now()) @map("saved_at")
+  baths        Int?     @db.SmallInt
+  beds         Int?     @db.SmallInt
+  image        String?
+  neighborhood String?  @db.VarChar(150)
+  price        Decimal? @db.Decimal(15, 2)
+  size         Decimal? @db.Decimal(10, 2)
+  title        String?  @db.VarChar(255)
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+  @@map("saved_properties")
+}
+
+model SavedSearch {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  name                 String    @db.VarChar(200)
+  description          String?
+  filters              Json
+  notificationsEnabled Boolean   @default(false) @map("notifications_enabled")
+  lastUsedAt           DateTime? @map("last_used_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([lastUsedAt])
+  @@map("saved_searches")
+}
+
+model PropertyHistory {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId    String   @map("property_id") @db.Uuid
+  fieldName     String   @map("field_name") @db.VarChar(100)
+  oldValue      String?  @map("old_value")
+  newValue      String?  @map("new_value")
+  changedBy     String   @map("changed_by") @db.Uuid
+  changedAt     DateTime @default(now()) @map("changed_at")
+  notes         String?
+  changedByUser User     @relation("PropertyHistoryChangedBy", fields: [changedBy], references: [id])
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([changedAt(sort: Desc)])
+  @@map("property_history")
+}
+
+model MarketStatistic {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  neighborhoodId String?       @map("neighborhood_id") @db.Uuid
+  propertyType   PropertyType? @map("property_type")
+  period         String        @db.VarChar(7)
+  avgPrice       Decimal?      @map("avg_price") @db.Decimal(15, 2)
+  medianPrice    Decimal?      @map("median_price") @db.Decimal(15, 2)
+  pricePerSqm    Decimal?      @map("price_per_sqm") @db.Decimal(10, 2)
+  avgRentalPrice Decimal?      @map("avg_rental_price") @db.Decimal(15, 2)
+  rentalYield    Decimal?      @map("rental_yield") @db.Decimal(6, 4)
+  priceGrowth    Decimal?      @map("price_growth") @db.Decimal(8, 4)
+  rentGrowth     Decimal?      @map("rent_growth") @db.Decimal(8, 4)
+  activeListings Int?          @map("active_listings")
+  sampleSize     Int?          @map("sample_size")
+  calculatedAt   DateTime      @default(now()) @map("calculated_at")
+  neighborhood   Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+
+  @@unique([neighborhoodId, propertyType, period])
+  @@index([neighborhoodId])
+  @@index([period(sort: Desc)])
+  @@map("market_statistics")
+}
+
+model EconomicIndicator {
+  id            String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  indicatorType EconomicIndicatorType @map("indicator_type")
+  value         Decimal               @db.Decimal(12, 4)
+  unit          String                @db.VarChar(50)
+  recordedAt    DateTime              @map("recorded_at") @db.Date
+  source        String?               @db.VarChar(255)
+  notes         String?
+  createdAt     DateTime              @default(now()) @map("created_at")
+  createdBy     String?               @map("created_by") @db.Uuid
+  sourceUrl     String?               @map("source_url")
+  creator       User?                 @relation("EconomicIndicatorCreator", fields: [createdBy], references: [id])
+
+  @@unique([indicatorType, recordedAt])
+  @@index([indicatorType])
+  @@index([recordedAt(sort: Desc)])
+  @@map("economic_indicators")
+}
+
+model Valuation {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId         String   @map("property_id") @db.Uuid
+  estimatedValue     Decimal  @map("estimated_value") @db.Decimal(15, 2)
+  askingPrice        Decimal  @map("asking_price") @db.Decimal(15, 2)
+  priceDifference    Decimal  @map("price_difference") @db.Decimal(15, 2)
+  priceDifferencePct Decimal  @map("price_difference_pct") @db.Decimal(8, 4)
+  comparableCount    Int      @default(0) @map("comparable_count")
+  methodology        String?
+  confidenceScore    Decimal? @map("confidence_score") @db.Decimal(4, 3)
+  calculatedBy       String?  @map("calculated_by") @db.Uuid
+  calculatedAt       DateTime @default(now()) @map("calculated_at")
+  calculatedByUser   User?    @relation(fields: [calculatedBy], references: [id])
+  property           Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("valuations")
+}
+
+model Forecast {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  neighborhoodId String?       @map("neighborhood_id") @db.Uuid
+  propertyType   PropertyType? @map("property_type")
+  forecastType   ForecastType  @map("forecast_type")
+  baseValue      Decimal       @map("base_value") @db.Decimal(15, 2)
+  forecastMonths Int           @default(6) @map("forecast_months") @db.SmallInt
+  trendSlope     Decimal?      @map("trend_slope") @db.Decimal(18, 2)
+  rSquared       Decimal?      @map("r_squared") @db.Decimal(6, 4)
+  dataPoints     Int?          @map("data_points")
+  forecastData   Json          @map("forecast_data")
+  assumptions    Json?
+  generatedAt    DateTime      @default(now()) @map("generated_at")
+  neighborhood   Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+
+  @@index([neighborhoodId])
+  @@index([generatedAt(sort: Desc)])
+  @@map("forecasts")
+}
+
+model Scenario {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String           @db.VarChar(255)
+  description String?
+  parameters  Json
+  createdBy   String           @map("created_by") @db.Uuid
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  results     ScenarioResult[]
+  creator     User             @relation(fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+  @@map("scenarios")
+}
+
+model ScenarioResult {
+  id                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  scenarioId        String        @map("scenario_id") @db.Uuid
+  neighborhoodId    String?       @map("neighborhood_id") @db.Uuid
+  priceImpactPct    Decimal?      @map("price_impact_pct") @db.Decimal(8, 4)
+  rentalImpactPct   Decimal?      @map("rental_impact_pct") @db.Decimal(8, 4)
+  demandImpact      String?       @map("demand_impact") @db.VarChar(50)
+  supplyImpact      String?       @map("supply_impact") @db.VarChar(50)
+  calculatedResults Json          @map("calculated_results")
+  assumptions       Json
+  aiExplanation     String?       @map("ai_explanation")
+  calculatedAt      DateTime      @default(now()) @map("calculated_at")
+  neighborhood      Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+  scenario          Scenario      @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@index([scenarioId])
+  @@map("scenario_results")
+}
+
+model Report {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title           String   @db.VarChar(255)
+  description     String?
+  period          String?  @db.VarChar(7)
+  neighborhoodIds Json?    @map("neighborhood_ids")
+  marketData      Json     @map("market_data")
+  economicData    Json?    @map("economic_data")
+  analysis        String?
+  conclusions     String?
+  authorId        String   @map("author_id") @db.Uuid
+  generatedAt     DateTime @default(now()) @map("generated_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  author          User     @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([generatedAt(sort: Desc)])
+  @@map("reports")
+}
+
+model Alert {
+  id               String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  alertType        String        @map("alert_type") @db.VarChar(100)
+  severity         AlertSeverity
+  message          String
+  neighborhoodId   String?       @map("neighborhood_id") @db.Uuid
+  propertyId       String?       @map("property_id") @db.Uuid
+  metadata         Json?
+  acknowledgedBy   String?       @map("acknowledged_by") @db.Uuid
+  acknowledgedAt   DateTime?     @map("acknowledged_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  acknowledgedUser User?         @relation("AlertAcknowledgedBy", fields: [acknowledgedBy], references: [id])
+  neighborhood     Neighborhood? @relation(fields: [neighborhoodId], references: [id])
+  property         Property?     @relation(fields: [propertyId], references: [id])
+
+  @@index([alertType])
+  @@index([createdAt(sort: Desc)])
+  @@map("alerts")
+}
+
+model Notification {
+  id          String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String                @map("user_id") @db.Uuid
+  type        NotificationType      @default(SYSTEM)
+  title       String                @db.VarChar(200)
+  body        String                @db.VarChar(500)
+  link        String?               @db.VarChar(255)
+  isRead      Boolean               @default(false) @map("is_read")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  channels    NotificationChannel[] @default([IN_APP])
+  priority    String                @default("normal") @db.VarChar(20)
+  readAt      DateTime?             @map("read_at")
+  scheduledAt DateTime?             @map("scheduled_at")
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model DataSource {
+  id          String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String          @db.VarChar(255)
+  sourceType  String          @map("source_type") @db.VarChar(50)
+  description String?
+  createdBy   String?         @map("created_by") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at")
+  importJobs  DataImportJob[]
+  creator     User?           @relation(fields: [createdBy], references: [id])
+
+  @@map("data_sources")
+}
+
+model DataImportJob {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sourceId        String?      @map("source_id") @db.Uuid
+  jobType         String       @map("job_type") @db.VarChar(100)
+  status          ImportStatus @default(pending)
+  recordsReceived Int          @default(0) @map("records_received")
+  recordsValid    Int          @default(0) @map("records_valid")
+  recordsRejected Int          @default(0) @map("records_rejected")
+  errorLog        Json?        @map("error_log")
+  fileName        String?      @map("file_name") @db.VarChar(255)
+  startedAt       DateTime?    @map("started_at")
+  completedAt     DateTime?    @map("completed_at")
+  createdBy       String?      @map("created_by") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at")
+  creator         User?        @relation(fields: [createdBy], references: [id])
+  source          DataSource?  @relation(fields: [sourceId], references: [id])
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("data_import_jobs")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  resource   String   @db.VarChar(100)
+  resourceId String?  @map("resource_id") @db.VarChar(255)
+  oldData    Json?    @map("old_data")
+  newData    Json?    @map("new_data")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+/// Daily bank exchange rates (CBE published JSON, NBE reference page import).
+model ExchangeRate {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  rateDate             DateTime @map("rate_date") @db.Date
+  currency             String   @db.VarChar(10)
+  baseCurrency         String   @default("ETB") @map("base_currency") @db.VarChar(10)
+  cashBuying           Decimal? @map("cash_buying") @db.Decimal(18, 6)
+  cashSelling          Decimal? @map("cash_selling") @db.Decimal(18, 6)
+  transactionalBuying  Decimal? @map("transactional_buying") @db.Decimal(18, 6)
+  transactionalSelling Decimal? @map("transactional_selling") @db.Decimal(18, 6)
+  source               String   @db.VarChar(50)
+  sourceUrl            String?  @map("source_url")
+  fetchedAt            DateTime @default(now()) @map("fetched_at") @db.Timestamptz(6)
+
+  @@unique([rateDate, currency, source])
+  @@index([currency, rateDate(sort: Desc)])
+  @@map("exchange_rates")
+}
+
+/// Historical macro indicators from World Bank Open Data (population, GDP,
+/// urbanization, ...). Kept separate from EconomicIndicator because these are
+/// annual country-level series, not monthly Ethiopian observations.
+model MacroIndicator {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  indicatorCode String   @map("indicator_code") @db.VarChar(50)
+  indicatorName String   @map("indicator_name") @db.VarChar(255)
+  country       String   @default("ETH") @db.VarChar(8)
+  year          Int
+  value         Decimal  @db.Decimal(24, 4)
+  unit          String?  @db.VarChar(50)
+  source        String   @default("World Bank Open Data") @db.VarChar(100)
+  sourceUrl     String?  @map("source_url")
+  fetchedAt     DateTime @default(now()) @map("fetched_at") @db.Timestamptz(6)
+
+  @@unique([indicatorCode, year, country])
+  @@index([indicatorCode, year(sort: Desc)])
+  @@map("macro_indicators")
+}
+
+/// Administrative boundaries (geoBoundaries ETH ADM*) as GeoJSON features,
+/// used for maps and geographic analysis. Distinct from EstatePlus neighborhoods.
+model GeographicBoundary {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  country    String   @default("ETH") @db.VarChar(8)
+  adminLevel String   @map("admin_level") @db.VarChar(10)
+  name       String   @db.VarChar(255)
+  geometry   Json
+  properties Json?
+  source     String   @default("geoBoundaries gbOpen") @db.VarChar(100)
+  license    String?  @db.VarChar(255)
+  sourceYear Int?     @map("source_year")
+  fetchedAt  DateTime @default(now()) @map("fetched_at") @db.Timestamptz(6)
+
+  @@unique([country, adminLevel, name])
+  @@index([adminLevel])
+  @@map("geographic_boundaries")
+}
+
+enum UserRole {
+  USER
+  PROPERTY_OWNER
+  ANALYST
+  ADMIN
+}
+
+enum PropertyType {
+  APARTMENT
+  VILLA
+  CONDOMINIUM
+  OFFICE
+  RETAIL
+  WAREHOUSE
+  LAND
+}
+
+enum PropertyCondition {
+  NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  NEEDS_RENOVATION
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  ARCHIVED
+  ACTIVE
+  INACTIVE
+  SOLD
+  RENTED
+  UNDER_CONTRACT
+}
+
+enum ListingType {
+  SALE
+  RENT
+  BOTH
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  SOLD
+  RENTED
+  WITHDRAWN
+}
+
+enum EconomicIndicatorType {
+  INFLATION_RATE
+  INTEREST_RATE
+  EXCHANGE_RATE
+  CONSTRUCTION_COST_INDEX
+  GDP_GROWTH
+  UNEMPLOYMENT_RATE
+  CONSUMER_PRICE_INDEX
+  MONEY_SUPPLY
+  BANK_LENDING_RATE
+  GOVERNMENT_DEBT
+  IMPORT_PRICE_INDEX
+  EXPORT_PRICE_INDEX
+  REAL_ESTATE_PRICE_INDEX
+  RENTAL_YIELD_INDEX
+  HOUSING_AFFORDABILITY
+  MORTGAGE_RATE
+  CREDIT_GROWTH
+  FOREIGN_INVESTMENT
+  TAX_REVENUE
+  OTHER
+}
+
+enum ForecastType {
+  price
+  rental
+}
+
+enum ImportStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum AlertSeverity {
+  info
+  warning
+  critical
+}
+
+enum AmenityType {
+  SCHOOL
+  HOSPITAL
+  CLINIC
+  PHARMACY
+  SUPERMARKET
+  RESTAURANT
+  BANK
+  ATM
+  GAS_STATION
+  PUBLIC_TRANSPORT
+  PARK
+  MOSQUE
+  CHURCH
+  SHOPPING_MALL
+  MARKET
+  POLICE_STATION
+  FIRE_STATION
+  POST_OFFICE
+  LIBRARY
+  GYM
+  HOTEL
+  ENTERTAINMENT
+  GOVERNMENT_OFFICE
+  OTHER
+}
+
+enum StatisticType {
+  POPULATION_DENSITY
+  CRIME_RATE
+  TRAFFIC_VOLUME
+  AIR_QUALITY
+  NOISE_LEVEL
+  AMENITY_COUNT
+  WALKABILITY_SCORE
+  TRANSIT_SCORE
+  BIKE_SCORE
+  EDUCATION_SCORE
+  SAFETY_SCORE
+  LIVABILITY_INDEX
+  PROPERTY_DEMAND
+  PROPERTY_SUPPLY
+  RENT_AFFORDABILITY
+  OTHER
+}
+
+enum NotificationType {
+  PRICE_ALERT
+  NEW_LISTING
+  PROPERTY_APPROVED
+  PROPERTY_REJECTED
+  SYSTEM
+  PROPERTY
+  ALERT
+  MARKET
+  ANALYSIS
+  FORECAST
+  NOTICE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+  SMS
+}
+
+// ─── Owner workspace: inquiries, viewings, documents ────────────────────────
+
+enum InquiryStatus {
+  NEW
+  RESPONDED
+  CLOSED
+}
+
+/// A buyer/renter message about a listing, addressed to the listing owner.
+model Inquiry {
+  id          String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId  String        @map("property_id") @db.Uuid
+  ownerId     String        @map("owner_id") @db.Uuid
+  senderId    String?       @map("sender_id") @db.Uuid
+  name        String        @db.VarChar(150)
+  email       String        @db.VarChar(255)
+  phone       String?       @db.VarChar(40)
+  message     String        @db.VarChar(2000)
+  status      InquiryStatus @default(NEW)
+  response    String?       @db.VarChar(2000)
+  respondedAt DateTime?     @map("responded_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  owner       User          @relation("InquiryOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  property    Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  sender      User?         @relation("InquirySender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId, status])
+  @@index([propertyId])
+  @@index([createdAt(sort: Desc)])
+  @@map("inquiries")
+}
+
+enum ViewingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+/// A scheduled visit to one of the owner's listings.
+model Viewing {
+  id          String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  propertyId  String        @map("property_id") @db.Uuid
+  ownerId     String        @map("owner_id") @db.Uuid
+  clientName  String        @map("client_name") @db.VarChar(150)
+  clientEmail String        @map("client_email") @db.VarChar(255)
+  clientPhone String?       @map("client_phone") @db.VarChar(40)
+  scheduledAt DateTime      @map("scheduled_at")
+  status      ViewingStatus @default(SCHEDULED)
+  notes       String?       @db.VarChar(2000)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  owner       User          @relation("ViewingOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  property    Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, status])
+  @@index([ownerId, scheduledAt])
+  @@map("viewings")
+}
+
+/// A file the owner attached to their workspace (deed, contract, photo...).
+/// Bytes live in the database so downloads survive without shared storage.
+model PropertyDocument {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ownerId    String    @map("owner_id") @db.Uuid
+  propertyId String?   @map("property_id") @db.Uuid
+  name       String    @db.VarChar(255)
+  category   String    @db.VarChar(60)
+  mimeType   String    @map("mime_type") @db.VarChar(120)
+  sizeBytes  Int       @map("size_bytes")
+  data       Bytes
+  createdAt  DateTime  @default(now()) @map("created_at")
+  owner      User      @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId, createdAt(sort: Desc)])
+  @@index([propertyId])
+  @@map("property_documents")
+}

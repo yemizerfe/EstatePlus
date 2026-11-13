@@ -1,0 +1,10 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+const transport = new StreamableHTTPClientTransport(new URL('https://bina.et/mcp'));
+const client = new Client({ name: 'probe', version: '1.0.0' });
+await client.connect(transport);
+const res = await client.callTool({ name: 'search_properties', arguments: { area: 'Bole', type: 'Apartment', listing: 'sale', limit: 3 } });
+console.log('isError:', res.isError);
+const text = res.content?.filter(c => c.type === 'text').map(c => c.text).join('\n');
+console.log(text?.slice(0, 2500));
+await client.close();

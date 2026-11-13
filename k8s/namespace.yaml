@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: realestate
+  labels:
+    name: realestate
+    environment: production

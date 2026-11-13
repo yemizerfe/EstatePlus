@@ -1,0 +1,152 @@
+src/pages/admin/AdminProfilePage.tsx(169,10): error TS1134: Variable declaration expected.
+src/pages/admin/AdminProfilePage.tsx(169,12): error TS1134: Variable declaration expected.
+src/pages/admin/DataSourcesPage.tsx(22,10): error TS1134: Variable declaration expected.
+src/pages/admin/DataSourcesPage.tsx(22,12): error TS1134: Variable declaration expected.
+src/pages/analyst/AnalystDashboardPage.tsx(19,38): error TS1135: Argument expression expected.
+src/pages/analyst/AnalystDashboardPage.tsx(19,45): error TS1005: ';' expected.
+src/pages/analyst/AnalystDashboardPage.tsx(30,31): error TS1135: Argument expression expected.
+src/pages/analyst/AnalystDashboardPage.tsx(30,38): error TS1005: ';' expected.
+src/pages/analyst/AnalystDashboardPage.tsx(105,35): error TS1135: Argument expression expected.
+src/pages/analyst/AnalystDashboardPage.tsx(105,42): error TS1005: ';' expected.
+src/pages/analyst/AnalystNeighborhoodsPage.tsx(89,12): error TS1438: Interface must be given a name.
+src/pages/analyst/AnalystPropertiesPage.tsx(21,30): error TS1135: Argument expression expected.
+src/pages/analyst/AnalystPropertiesPage.tsx(21,37): error TS1005: ';' expected.
+src/pages/analyst/AnalystSettingsPage.tsx(11,1): error TS1003: Identifier expected.
+src/pages/analyst/DataImportsPage.tsx(86,27): error TS1135: Argument expression expected.
+src/pages/analyst/DataImportsPage.tsx(86,33): error TS1005: ',' expected.
+src/pages/analyst/DataImportsPage.tsx(86,43): error TS1005: ';' expected.
+src/pages/analyst/DataImportsPage.tsx(91,28): error TS1135: Argument expression expected.
+src/pages/analyst/DataImportsPage.tsx(91,38): error TS1005: ';' expected.
+src/pages/analyst/DataImportsPage.tsx(96,29): error TS1135: Argument expression expected.
+src/pages/analyst/DataImportsPage.tsx(96,39): error TS1005: ';' expected.
+src/pages/analyst/DataSourcesPage.tsx(181,31): error TS1135: Argument expression expected.
+src/pages/analyst/DataSourcesPage.tsx(181,41): error TS1005: ';' expected.
+src/pages/analyst/MarketExplorerPage.tsx(14,30): error TS1135: Argument expression expected.
+src/pages/analyst/MarketExplorerPage.tsx(14,37): error TS1005: ';' expected.
+src/pages/analyst/MarketTrendsPage.tsx(20,8): error TS1134: Variable declaration expected.
+src/pages/analyst/MarketTrendsPage.tsx(20,16): error TS1005: ',' expected.
+src/pages/analyst/MarketTrendsPage.tsx(20,17): error TS1109: Expression expected.
+src/pages/analyst/MarketTrendsPage.tsx(20,19): error TS1434: Unexpected keyword or identifier.
+src/pages/analyst/MarketTrendsPage.tsx(20,22): error TS1128: Declaration or statement expected.
+src/pages/analyst/MarketTrendsPage.tsx(20,24): error TS1128: Declaration or statement expected.
+src/pages/analyst/MarketTrendsPage.tsx(56,8): error TS1134: Variable declaration expected.
+src/pages/analyst/MarketTrendsPage.tsx(56,16): error TS1005: ',' expected.
+src/pages/analyst/MarketTrendsPage.tsx(56,17): error TS1109: Expression expected.
+src/pages/analyst/MarketTrendsPage.tsx(56,19): error TS1434: Unexpected keyword or identifier.
+src/pages/analyst/MarketTrendsPage.tsx(56,22): error TS1128: Declaration or statement expected.
+src/pages/analyst/MarketTrendsPage.tsx(56,24): error TS1128: Declaration or statement expected.
+src/pages/analyst/PricingAnalysisPage.tsx(17,39): error TS1135: Argument expression expected.
+src/pages/analyst/PricingAnalysisPage.tsx(17,46): error TS1005: ';' expected.
+src/pages/analyst/PricingAnalysisPage.tsx(62,39): error TS1135: Argument expression expected.
+src/pages/analyst/PricingAnalysisPage.tsx(62,46): error TS1005: ';' expected.
+src/pages/analyst/PricingAnalysisPage.tsx(121,37): error TS1135: Argument expression expected.
+src/pages/analyst/PricingAnalysisPage.tsx(121,44): error TS1005: ';' expected.
+src/pages/analyst/PricingAnalysisPage.tsx(132,35): error TS1135: Argument expression expected.
+src/pages/analyst/PricingAnalysisPage.tsx(132,42): error TS1005: ';' expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(160,31): error TS1135: Argument expression expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(160,39): error TS1005: ',' expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(160,62): error TS1005: ';' expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(165,26): error TS1135: Argument expression expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(165,36): error TS1005: ';' expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(170,25): error TS1135: Argument expression expected.
+src/pages/analyst/ReportsAnalyticsPage.tsx(170,35): error TS1005: ';' expected.
+src/pages/market/DashboardPage.tsx(8,35): error TS1135: Argument expression expected.
+src/pages/market/DashboardPage.tsx(8,42): error TS1005: ';' expected.
+src/pages/market/DashboardPage.tsx(18,31): error TS1135: Argument expression expected.
+src/pages/market/DashboardPage.tsx(18,38): error TS1005: ';' expected.
+src/pages/properties/AddEditPropertyPage.tsx(70,28): error TS1135: Argument expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(70,37): error TS1005: ',' expected.
+src/pages/properties/AddEditPropertyPage.tsx(70,46): error TS1005: ',' expected.
+src/pages/properties/AddEditPropertyPage.tsx(70,47): error TS17008: JSX element 'PropertyFormData' has no corresponding closing tag.
+src/pages/properties/AddEditPropertyPage.tsx(70,66): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(71,8): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(86,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(88,67): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(89,58): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(90,14): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(90,37): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(91,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(101,3): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(106,44): error TS17008: JSX element 'PropertyFormData' has no corresponding closing tag.
+src/pages/properties/AddEditPropertyPage.tsx(107,40): error TS17008: JSX element 'Record' has no corresponding closing tag.
+src/pages/properties/AddEditPropertyPage.tsx(109,15): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(109,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(110,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(111,18): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(113,24): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(114,24): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(115,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(116,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(119,15): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(119,43): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(119,80): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(119,84): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(121,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(122,7): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(123,39): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(124,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(125,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(126,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(129,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(129,57): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(130,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(130,50): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(131,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(131,60): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(132,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(132,53): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(133,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(133,62): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(136,71): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(137,55): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(139,52): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(140,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(141,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(143,49): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(144,5): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(144,35): error TS1003: Identifier expected.
+src/pages/properties/AddEditPropertyPage.tsx(144,43): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(147,7): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(157,46): error TS1003: Identifier expected.
+src/pages/properties/AddEditPropertyPage.tsx(161,48): error TS1003: Identifier expected.
+src/pages/properties/AddEditPropertyPage.tsx(163,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(167,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(169,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(170,5): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(171,52): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(172,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(173,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(175,30): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(176,50): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(177,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(179,31): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(180,67): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(181,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(183,28): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(184,5): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(185,70): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(186,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(187,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(189,55): error TS17008: JSX element 'HTMLInputElement' has no corresponding closing tag.
+src/pages/properties/AddEditPropertyPage.tsx(189,75): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(190,5): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(191,23): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(193,13): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(194,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(195,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(197,40): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(201,8): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(202,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(204,44): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/properties/AddEditPropertyPage.tsx(210,8): error TS1005: '}' expected.
+src/pages/properties/AddEditPropertyPage.tsx(211,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(214,5): error TS1109: Expression expected.
+src/pages/properties/AddEditPropertyPage.tsx(219,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(664,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/properties/AddEditPropertyPage.tsx(666,1): error TS1005: '</' expected.
+src/pages/properties/MyPropertiesPage.tsx(46,32): error TS1135: Argument expression expected.
+src/pages/properties/MyPropertiesPage.tsx(46,38): error TS1005: ',' expected.
+src/pages/properties/MyPropertiesPage.tsx(46,47): error TS1005: ',' expected.
+src/pages/properties/MyPropertiesPage.tsx(46,91): error TS1005: ';' expected.
+src/pages/properties/PropertyExplorerPage.tsx(97,10): error TS1134: Variable declaration expected.
+src/pages/properties/PropertyExplorerPage.tsx(97,12): error TS1134: Variable declaration expected.

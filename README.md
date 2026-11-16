@@ -75,6 +75,13 @@ git clone https://github.com/yemizerfe/EstatePlus.git
 cd estateplus
 ``` 
 
+### 2. Configure the environment
+
+```bash
+cp backend/.env.production.example .env
+# then set POSTGRES_PASSWORD, JWT_SECRET and JWT_REFRESH_SECRET in .env
+```
+
 ### 3. Build and start the application
 
 ```bash
@@ -100,6 +107,20 @@ docker compose down -v
 ```
 
 > The exact services, ports, and environment variables depend on the Docker Compose configuration included in this repository.
+
+## Project Structure
+
+```text
+docker-compose.yml   Production stack: postgres, redis, api, web, optional worker
+README.md / LICENSE  Repository-level files only
+
+backend/             Express + TypeScript API, Prisma schema, Dockerfile, .gitignore
+frontend/            React SPA, nginx config, Dockerfile, .gitignore
+```
+
+Every application file lives in `backend/` or `frontend/`. The root keeps only the
+Compose stack and repository files; `.env` is created at the root from
+`backend/.env.production.example` because Docker Compose reads it there.
 
 ## Development
 

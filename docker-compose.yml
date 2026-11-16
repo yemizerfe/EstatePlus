@@ -1,5 +1,5 @@
 # ── One command: docker compose up -d --build ───────────────────────────────
-# Copy .env.production.example to .env and set real secrets first.
+# Copy backend/.env.production.example to .env and set real secrets first.
 
 services:
   postgres:

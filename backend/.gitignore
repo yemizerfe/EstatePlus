@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment files (examples stay tracked)
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Runtime data written by the app
+uploads/
+.bina-sync-state.json
+
+# Logs
+*.log
+
+# Scratch output
+tmp/
+tmp-*
+tmp_*
+tsc-*.json
+coverage/
+.nyc_output/

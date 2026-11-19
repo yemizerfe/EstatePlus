@@ -5,7 +5,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Environment files (examples stay tracked)
+# Environment files (examples and templates stay tracked)
 .env
 .env.*
 !.env.example

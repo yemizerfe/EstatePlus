@@ -2,8 +2,6 @@ import { createApp } from './app';
 import { config } from './config';
 import { prisma, disconnectDb } from './infrastructure/database/prisma';
 import { getRedis, closeRedis } from './infrastructure/redis/client';
-import { getRabbitChannel, closeRabbit } from './infrastructure/rabbitmq/client';
-import { getKafkaProducer, ensureTopics, disconnectKafka } from './infrastructure/kafka/client';
 import { jobQueueService } from './services/job-queue.service';
 import {
   backfillNeighborhoodCentroids,
@@ -12,36 +10,43 @@ import {
 import { logger } from './shared/utils/logger';
 
 async function bootstrap(): Promise<void> {
-  // Verify DB connection
+  // Verify database connection
   await prisma.$connect();
   logger.info('Database connected');
 
   // Connect Redis (non-fatal if unavailable)
   await getRedis();
 
-  // Connect RabbitMQ (non-fatal)
-  await getRabbitChannel();
-
-  // Connect Kafka producer + ensure topics (non-fatal)
-  await getKafkaProducer();
-  await ensureTopics();
-
-  // Initialize job queue service (non-fatal)
+  // Initialize job queue service
+  // Without RabbitMQ, this will use the in-process fallback
+  // if the service supports it.
   try {
     await jobQueueService.initialize();
     logger.info('Job queue service initialized');
   } catch (error) {
-    logger.warn({ msg: 'Job queue service initialization failed', error });
+    logger.warn({
+      msg: 'Job queue service initialization failed',
+      error,
+    });
   }
 
-  // Refresh the monthly market statistics every page reads from the listings
-  // actually in the database (non-fatal: pages still read live listing medians).
+  // Refresh market statistics from listings in the database
+  // Non-fatal: the application can still serve live listing data
+  // if the statistics refresh fails.
   try {
     const derived = await deriveMarketStatistics({ months: 24 });
     const centroids = await backfillNeighborhoodCentroids();
-    logger.info({ msg: 'Market statistics refreshed', ...derived, centroids });
+
+    logger.info({
+      msg: 'Market statistics refreshed',
+      ...derived,
+      centroids,
+    });
   } catch (error) {
-    logger.warn({ msg: 'Market statistics refresh failed', error });
+    logger.warn({
+      msg: 'Market statistics refresh failed',
+      error,
+    });
   }
 
   const app = createApp();
@@ -57,31 +62,49 @@ async function bootstrap(): Promise<void> {
 
   // Graceful shutdown
   const shutdown = async (signal: string) => {
-    logger.info({ msg: 'Graceful shutdown initiated', signal });
+    logger.info({
+      msg: 'Graceful shutdown initiated',
+      signal,
+    });
+
     server.close(async () => {
-      await disconnectKafka();
-      await closeRabbit();
       await closeRedis();
       await disconnectDb();
+
       logger.info('Graceful shutdown complete');
       process.exit(0);
     });
+
     setTimeout(() => process.exit(1), 10000);
   };
 
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
   process.on('SIGINT', () => void shutdown('SIGINT'));
+
   process.on('uncaughtException', (err) => {
-    logger.fatal({ msg: 'Uncaught exception', err });
+    logger.fatal({
+      msg: 'Uncaught exception',
+      err,
+    });
+
     process.exit(1);
   });
+
   process.on('unhandledRejection', (reason) => {
-    logger.fatal({ msg: 'Unhandled rejection', reason });
+    logger.fatal({
+      msg: 'Unhandled rejection',
+      reason,
+    });
+
     process.exit(1);
   });
 }
 
 bootstrap().catch((err) => {
-  logger.fatal({ msg: 'Bootstrap failed', err });
+  logger.fatal({
+    msg: 'Bootstrap failed',
+    err,
+  });
+
   process.exit(1);
 });

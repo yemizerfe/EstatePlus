@@ -6,6 +6,7 @@ import { EconomicDataImportJobPayload } from '../../../services/job-queue.servic
 import { ProcessingError, ValidationError, getErrorMessage } from '../../../shared/utils/errors';
 import { worldBankAdapter } from '../../external-sources/adapters/world-bank.adapter';
 import { cbeExchangeAdapter } from '../../external-sources/adapters/cbe-exchange.adapter';
+import { loadUploadedRows, uploadedDate, uploadedNumber, uploadedText } from './uploaded-row-data';
 
 /**
  * Economic indicator import.
@@ -74,6 +75,10 @@ const REPORT_ONLY: Partial<Record<EconomicIndicatorType, string>> = {
 
 export class EconomicDataImportService {
   async importEconomicData(payload: EconomicDataImportJobPayload): Promise<ImportResult> {
+    if (payload.sourceId) {
+      return this.importUploadedEconomicData(payload);
+    }
+
     const result: ImportResult = {
       recordsReceived: 0,
       recordsValid: 0,
@@ -145,6 +150,69 @@ export class EconomicDataImportService {
     }
 
     logger.info({ msg: 'Economic data import completed', jobId: payload.id, result });
+    return result;
+  }
+
+  private async importUploadedEconomicData(
+    payload: EconomicDataImportJobPayload,
+  ): Promise<ImportResult> {
+    const rows = await loadUploadedRows(payload.sourceId!);
+    const result: ImportResult = {
+      recordsReceived: rows.length,
+      recordsValid: 0,
+      recordsRejected: 0,
+      errors: [],
+      warnings: [],
+      indicatorsUpdated: [],
+    };
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index]!;
+      try {
+        const indicatorText = uploadedText(row, 'indicatorType', 'indicator');
+        const value = uploadedNumber(row, 'value', 'observation');
+        const date = uploadedDate(row, 'recordedAt', 'date', 'dateOrPeriod', 'period');
+        if (!indicatorText || value === null || !date) {
+          throw new ValidationError('Indicator type, numeric value and valid date are required');
+        }
+
+        const indicatorType = indicatorText.toUpperCase().replace(/[\s-]+/g, '_') as EconomicIndicatorType;
+        if (!Object.values(EconomicIndicatorType).includes(indicatorType)) {
+          throw new ValidationError(`Unknown indicator type: ${indicatorText}`);
+        }
+
+        const record: EconomicDataRecord = {
+          indicatorType,
+          value,
+          date,
+          unit: uploadedText(row, 'unit') ?? this.getIndicatorUnit(indicatorType),
+          source: uploadedText(row, 'source') ?? 'CSV/Excel upload',
+          sourceUrl: uploadedText(row, 'sourceUrl') ?? undefined,
+          notes: uploadedText(row, 'notes') ?? undefined,
+        };
+        const validation = this.validateRecord(record, index + 1);
+        if (!validation.isValid) {
+          throw new ValidationError(validation.errors.join('; '));
+        }
+        if (validation.warnings.length > 0) {
+          result.warnings.push({ record: index + 1, warnings: validation.warnings });
+        }
+
+        await this.upsertEconomicIndicator(record, payload.userId);
+        result.recordsValid += 1;
+        if (!result.indicatorsUpdated.includes(indicatorType)) {
+          result.indicatorsUpdated.push(indicatorType);
+        }
+      } catch (error) {
+        result.recordsRejected += 1;
+        result.errors.push({
+          record: index + 1,
+          errors: [getErrorMessage(error)],
+        });
+      }
+    }
+
+    logger.info({ msg: 'Uploaded economic data import completed', jobId: payload.id, result });
     return result;
   }
 

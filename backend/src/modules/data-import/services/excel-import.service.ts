@@ -1,10 +1,12 @@
 
 
+import * as XLSX from 'xlsx';
+
 export interface ExcelSheetPreview {
   sheetName: string;
   rowCount: number;
   headerLabels: string[];
-  sampleRows: any[][];
+  sampleRows: unknown[][];
   columnCount: number;
   detectedDateColumns: string[];
   detectedNumericColumns: string[];
@@ -20,41 +22,34 @@ export interface ProfileMatch {
 }
 
 /**
- * Parse a workbook buffer (from multer memory storage) into a SheetJS workbook.
- * This is the only SheetJS surface the Excel routes touch directly; the rest is
- * plain-data normalization so the service stays easy to test/replace.
+ * Parse an uploaded workbook for preview and import.
  */
-export async function parseExcelWorkbook(buffer: Buffer): Promise<{ SheetNames: string[]; Sheets: Record<string, unknown> }> {
-  const XLSX = await import('xlsx');
+export function parseExcelWorkbook(buffer: Buffer): XLSX.WorkBook {
   const workbook = XLSX.read(buffer, {type: 'buffer', cellDates: true});
   if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
     throw new Error('Excel library could not parse the uploaded workbook');
   }
-  return workbook as { SheetNames: string[]; Sheets: Record<string, unknown> };
+  return workbook;
 }
 
 /**
  * Normalize a single sheet into a stable preview shape used by the frontend
  * and by the profile detector.
  */
-export function normalizeSheetPreview(sheet: any, sheetName: string): ExcelSheetPreview {
-  const rawRows = (() => {
-    try {
-      // header:1 gives us the raw grid incl. the first row as data
-      return (globalThis as any).XLSX?.utils?.sheet_to_json?.
-        call?.(null, sheet, {header: 1, raw: true, defval: null}) ?? [];
-    } catch {
-      return [];
-    }
-  })();
+export function normalizeSheetPreview(sheet: unknown, sheetName: string): ExcelSheetPreview {
+  const rawRows = XLSX.utils.sheet_to_json(sheet as XLSX.WorkSheet, {
+    header: 1,
+    raw: true,
+    defval: null,
+  }) as unknown[][];
 
-  const headerCandidates = rawRows.length > 0 ? (rawRows[0] as any[]) : [];
+  const headerCandidates = rawRows[0] ?? [];
   const headerLabels = headerCandidates
-    .map((cell: any) => (cell == null ? '' : String(cell).trim()))
+    .map((cell) => (cell == null ? '' : String(cell).trim()))
     .map((label) => (label.length > 0 ? label : null))
-    .filter((label): label is string => label != null);
+    .filter((label): label is string => label !== null);
 
-  const dataRows = rawRows.slice(1).filter((row: any[]) => row.some((cell) => cell != null));
+  const dataRows = rawRows.slice(1).filter((row) => row.some((cell) => cell != null));
 
   return {
     sheetName,
@@ -67,17 +62,13 @@ export function normalizeSheetPreview(sheet: any, sheetName: string): ExcelSheet
   };
 }
 
-function detectDateColumns(rows: any[][], labels: string[]): string[] {
+function detectDateColumns(rows: unknown[][], labels: string[]): string[] {
   const out: string[] = [];
   for (let c = 0; c < labels.length; c++) {
     const samples = rows.slice(0, 200).map((r) => r[c] ?? null).filter((v) => v != null);
     if (samples.length === 0) continue;
-    const hit = samples.some((v) => {
+    const hit = samples.some((v: unknown) => {
       if (v instanceof Date) return true;
-      if (typeof v === 'number') {
-        const d = new Date(v);
-        return !isNaN(d.getTime()) && d.getFullYear() >= 1900 && d.getFullYear() <= 2100;
-      }
       if (typeof v === 'string') {
         const trimmed = v.trim();
         if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return true;
@@ -96,12 +87,12 @@ function detectDateColumns(rows: any[][], labels: string[]): string[] {
 }
 
 
-function detectNumericColumns(rows: any[][], labels: string[]): string[] {
+function detectNumericColumns(rows: unknown[][], labels: string[]): string[] {
   const out: string[] = [];
   for (let c = 0; c < labels.length; c++) {
     const samples = rows.slice(0, 200).map((r) => r[c] ?? null).filter((v) => v != null);
     if (samples.length === 0) continue;
-    const hit = samples.some((v): boolean => {
+    const hit = samples.some((v: unknown): boolean => {
       if (typeof v === 'number') return Number.isFinite(v);
       if (typeof v === 'string') {
         const cleaned = v.replace(/[,\s]/g, '');

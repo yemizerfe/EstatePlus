@@ -37,6 +37,8 @@ export interface PropertyImportJobPayload extends BaseJobPayload {
 
 export interface MarketDataImportJobPayload extends BaseJobPayload {
   type: 'MARKET_DATA_IMPORT';
+  sourceId?: string;
+  jobRecordId?: string;
   dataType: 'price_trends' | 'sales_volume' | 'market_metrics';
   period: string;
   neighborhoods?: string[];
@@ -44,6 +46,8 @@ export interface MarketDataImportJobPayload extends BaseJobPayload {
 
 export interface EconomicDataImportJobPayload extends BaseJobPayload {
   type: 'ECONOMIC_DATA_IMPORT';
+  sourceId?: string;
+  jobRecordId?: string;
   indicators: string[];
   startDate: string;
   endDate: string;
@@ -52,6 +56,8 @@ export interface EconomicDataImportJobPayload extends BaseJobPayload {
 
 export interface NeighborhoodDataImportJobPayload extends BaseJobPayload {
   type: 'NEIGHBORHOOD_DATA_IMPORT';
+  sourceId?: string;
+  jobRecordId?: string;
   dataTypes: string[];
   neighborhoods?: string[];
   includeAmenities?: boolean;
@@ -354,58 +360,61 @@ export class JobQueueService {
   }
 
   private async processMarketDataImportJob(payload: MarketDataImportJobPayload): Promise<void> {
+    const recordId = payload.jobRecordId ?? payload.id;
     try {
-      logger.info({ msg: 'Processing market data import job', jobId: payload.id });
+      logger.info({ msg: 'Processing market data import job', jobId: payload.id, recordId });
       
-      await this.updateJobStatus(payload.id, 'processing');
+      await this.updateJobStatus(recordId, 'processing');
       
       const service = new MarketDataImportService();
       const result = await service.importMarketData(payload);
       
-      await this.updateJobStatus(payload.id, 'completed', result);
+      await this.updateJobStatus(recordId, 'completed', result);
       
       logger.info({ msg: 'Market data import job completed', jobId: payload.id, result });
     } catch (error) {
-      logger.error({ msg: 'Market data import job failed', jobId: payload.id, error });
-      await this.updateJobStatus(payload.id, 'failed', { error: getErrorMessage(error) });
+      logger.error({ msg: 'Market data import job failed', jobId: payload.id, recordId, error });
+      await this.updateJobStatus(recordId, 'failed', { error: getErrorMessage(error) });
       throw error;
     }
   }
 
   private async processEconomicDataImportJob(payload: EconomicDataImportJobPayload): Promise<void> {
+    const recordId = payload.jobRecordId ?? payload.id;
     try {
-      logger.info({ msg: 'Processing economic data import job', jobId: payload.id });
+      logger.info({ msg: 'Processing economic data import job', jobId: payload.id, recordId });
       
-      await this.updateJobStatus(payload.id, 'processing');
+      await this.updateJobStatus(recordId, 'processing');
       
       const service = new EconomicDataImportService();
       const result = await service.importEconomicData(payload);
       
-      await this.updateJobStatus(payload.id, 'completed', result);
+      await this.updateJobStatus(recordId, 'completed', result);
       
       logger.info({ msg: 'Economic data import job completed', jobId: payload.id, result });
     } catch (error) {
-      logger.error({ msg: 'Economic data import job failed', jobId: payload.id, error });
-      await this.updateJobStatus(payload.id, 'failed', { error: getErrorMessage(error) });
+      logger.error({ msg: 'Economic data import job failed', jobId: payload.id, recordId, error });
+      await this.updateJobStatus(recordId, 'failed', { error: getErrorMessage(error) });
       throw error;
     }
   }
 
   private async processNeighborhoodDataImportJob(payload: NeighborhoodDataImportJobPayload): Promise<void> {
+    const recordId = payload.jobRecordId ?? payload.id;
     try {
-      logger.info({ msg: 'Processing neighborhood data import job', jobId: payload.id });
+      logger.info({ msg: 'Processing neighborhood data import job', jobId: payload.id, recordId });
       
-      await this.updateJobStatus(payload.id, 'processing');
+      await this.updateJobStatus(recordId, 'processing');
       
       const service = new NeighborhoodDataImportService();
       const result = await service.importNeighborhoodData(payload);
       
-      await this.updateJobStatus(payload.id, 'completed', result);
+      await this.updateJobStatus(recordId, 'completed', result);
       
       logger.info({ msg: 'Neighborhood data import job completed', jobId: payload.id, result });
     } catch (error) {
-      logger.error({ msg: 'Neighborhood data import job failed', jobId: payload.id, error });
-      await this.updateJobStatus(payload.id, 'failed', { error: getErrorMessage(error) });
+      logger.error({ msg: 'Neighborhood data import job failed', jobId: payload.id, recordId, error });
+      await this.updateJobStatus(recordId, 'failed', { error: getErrorMessage(error) });
       throw error;
     }
   }

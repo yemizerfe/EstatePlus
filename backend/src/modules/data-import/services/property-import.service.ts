@@ -6,6 +6,7 @@ import { prisma } from '../../../infrastructure/database/prisma';
 import { logger } from '../../../shared/utils/logger';
 import { PropertyImportJobPayload } from '../../../services/job-queue.service';
 import { ValidationError, ProcessingError, getErrorMessage } from '../../../shared/utils/errors';
+import { uploadedRowsFromMetadata } from './uploaded-row-data';
 
 interface PropertyImportRecord {
   title: string;
@@ -226,6 +227,9 @@ export class PropertyImportService {
       if (!dataSource) {
         throw new ValidationError(`Data source not found: ${sourceId}`);
       }
+
+      const uploadedRows = uploadedRowsFromMetadata(dataSource.metadata);
+      if (uploadedRows) return uploadedRows.map((row) => this.normalizeRecord(row));
 
       // Source-driven pulls are deliberately not implemented: this schema has
       // no per-source connection settings, and pulling listings automatically

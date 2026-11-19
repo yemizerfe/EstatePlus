@@ -4,6 +4,12 @@ import { prisma } from '../../../infrastructure/database/prisma';
 import { logger } from '../../../shared/utils/logger';
 import { MarketDataImportJobPayload } from '../../../services/job-queue.service';
 import { ProcessingError, ValidationError, getErrorMessage } from '../../../shared/utils/errors';
+import {
+  isYearMonthPeriod,
+  loadUploadedRows,
+  uploadedNumber,
+  uploadedText,
+} from './uploaded-row-data';
 
 /**
  * Market statistics are derived from listings that are actually stored in the
@@ -38,6 +44,10 @@ interface ImportResult {
 
 export class MarketDataImportService {
   async importMarketData(payload: MarketDataImportJobPayload): Promise<ImportResult> {
+    if (payload.sourceId) {
+      return this.importUploadedMarketData(payload);
+    }
+
     const result: ImportResult = {
       recordsReceived: 0,
       recordsValid: 0,
@@ -47,7 +57,7 @@ export class MarketDataImportService {
       updatedPeriods: [],
     };
 
-    if (!/^\d{4}-\d{2}$/.test(payload.period)) {
+    if (!isYearMonthPeriod(payload.period)) {
       throw new ValidationError('period must be formatted YYYY-MM');
     }
     if (!['price_trends', 'sales_volume', 'market_metrics'].includes(payload.dataType)) {
@@ -99,13 +109,112 @@ export class MarketDataImportService {
     return result;
   }
 
+  private async importUploadedMarketData(payload: MarketDataImportJobPayload): Promise<ImportResult> {
+    const rows = await loadUploadedRows(payload.sourceId!);
+    const result: ImportResult = {
+      recordsReceived: rows.length,
+      recordsValid: 0,
+      recordsRejected: 0,
+      errors: [],
+      warnings: [],
+      updatedPeriods: [],
+    };
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index]!;
+      try {
+        const neighborhoodName = uploadedText(row, 'neighborhood', 'neighborhoodName', 'area');
+        const propertyTypeText = uploadedText(row, 'propertyType', 'property_type');
+        const period = uploadedText(row, 'period', 'date');
+        if (!neighborhoodName || !propertyTypeText || !period || !isYearMonthPeriod(period)) {
+          throw new ValidationError('Neighborhood, property type and YYYY-MM period are required');
+        }
+
+        const propertyType = propertyTypeText.toUpperCase().replace(/[\s-]+/g, '_') as PropertyType;
+        if (!Object.values(PropertyType).includes(propertyType)) {
+          throw new ValidationError(`Invalid property type: ${propertyTypeText}`);
+        }
+
+        const neighborhood = await prisma.neighborhood.findFirst({
+          where: { name: { equals: neighborhoodName, mode: 'insensitive' } },
+          select: { id: true },
+        });
+        if (!neighborhood) {
+          throw new ValidationError(`Neighborhood not found: ${neighborhoodName}`);
+        }
+
+        const activeListingsValue = uploadedNumber(row, 'activeListings');
+        const sampleSizeValue = uploadedNumber(row, 'sampleSize');
+        if (activeListingsValue !== null && activeListingsValue < 0) {
+          throw new ValidationError('activeListings cannot be negative');
+        }
+        if (sampleSizeValue !== null && sampleSizeValue < 0) {
+          throw new ValidationError('sampleSize cannot be negative');
+        }
+        const activeListings = Math.floor(activeListingsValue ?? 0);
+        const sampleSize = Math.floor(sampleSizeValue ?? activeListings);
+        const record: MarketDataRecord = {
+          neighborhoodId: neighborhood.id,
+          propertyType,
+          period,
+          avgPrice: uploadedNumber(row, 'averagePrice', 'avgPrice'),
+          medianPrice: uploadedNumber(row, 'medianPrice'),
+          pricePerSqm: uploadedNumber(row, 'pricePerSqm', 'pricePerSquareMeter'),
+          avgRentalPrice: uploadedNumber(row, 'averageRentalPrice', 'avgRentalPrice'),
+          rentalYield: uploadedNumber(row, 'rentalYield'),
+          priceGrowth: uploadedNumber(row, 'priceGrowth', 'priceGrowthRate'),
+          rentGrowth: uploadedNumber(row, 'rentGrowth', 'rentGrowthRate'),
+          activeListings,
+          sampleSize,
+        };
+
+        for (const [field, value] of Object.entries({
+          avgPrice: record.avgPrice,
+          medianPrice: record.medianPrice,
+          pricePerSqm: record.pricePerSqm,
+          avgRentalPrice: record.avgRentalPrice,
+          rentalYield: record.rentalYield,
+          activeListings: record.activeListings,
+          sampleSize: record.sampleSize,
+        })) {
+          if (value !== null && value < 0) {
+            throw new ValidationError(`${field} cannot be negative`);
+          }
+        }
+
+        if (
+          record.avgPrice === null &&
+          record.medianPrice === null &&
+          record.pricePerSqm === null &&
+          record.avgRentalPrice === null &&
+          record.activeListings === 0
+        ) {
+          throw new ValidationError('The row contains no market values to import');
+        }
+
+        await this.upsertMarketStatistic(record);
+        result.recordsValid += 1;
+        if (!result.updatedPeriods.includes(period)) result.updatedPeriods.push(period);
+      } catch (error) {
+        result.recordsRejected += 1;
+        result.errors.push({
+          record: index + 1,
+          errors: [getErrorMessage(error)],
+        });
+      }
+    }
+
+    logger.info({ msg: 'Uploaded market data import completed', jobId: payload.id, result });
+    return result;
+  }
+
   /** Aggregate stored listings for one period, grouped by neighborhood + type. */
   private async aggregatePeriod(
     neighborhoodIds: string[] | undefined,
     period: string,
   ): Promise<MarketDataRecord[]> {
     const [year, month] = period.split('-').map(Number);
-    if (!year || !month) return [];
+    if (!year || month < 1 || month > 12) return [];
 
     const start = new Date(Date.UTC(year, month - 1, 1));
     const endExclusive = new Date(Date.UTC(year, month, 1));
@@ -222,7 +331,7 @@ export class MarketDataImportService {
 
     if (!record.neighborhoodId) errors.push(`record ${recordIndex}: neighborhood is required`);
     if (!record.propertyType) errors.push(`record ${recordIndex}: property type is required`);
-    if (!record.period || !/^\d{4}-\d{2}$/.test(record.period)) {
+    if (!record.period || !isYearMonthPeriod(record.period)) {
       errors.push(`record ${recordIndex}: a valid YYYY-MM period is required`);
     }
     if (record.sampleSize === 0 && record.activeListings === 0) {

@@ -6,6 +6,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
   extensions = [pg_trgm, uuid_ossp(map: "uuid-ossp")]
 }
 
@@ -489,6 +490,7 @@ model DataSource {
   name        String          @db.VarChar(255)
   sourceType  String          @map("source_type") @db.VarChar(50)
   description String?
+  metadata    Json?
   createdBy   String?         @map("created_by") @db.Uuid
   createdAt   DateTime        @default(now()) @map("created_at")
   importJobs  DataImportJob[]

@@ -10,7 +10,13 @@ import { sendCreated } from '../../shared/utils/response';
 import { AuthenticatedRequest } from '../../shared/types';
 import { jobQueueService } from '../../services/job-queue.service';
 
-import { parseExcelWorkbook, ExcelSheetPreview, detectImportProfile, ProfileMatch } from './services/excel-import.service';
+import {
+  parseExcelWorkbook,
+  normalizeSheetPreview,
+  ExcelSheetPreview,
+  detectImportProfile,
+  ProfileMatch,
+} from './services/excel-import.service';
 import { scheduleExcelImportFromPreview } from './services/excel-job-dispatch.service';
 
 const router = express.Router();
@@ -307,8 +313,8 @@ router.get('/excel/templates', authenticate, requirePermission('IMPORT_EXCEL'), 
       {
         key: 'market_statistics',
         label: 'Market statistics template',
-        description: 'One row per neighborhood+propertyType+period. Columns: neighborhood, propertyType, period, averagePrice, medianPrice, pricePerSqm, salesVolume, averageDaysOnMarket.',
-        exampleColumns: ['neighborhood', 'propertyType', 'period', 'averagePrice', 'medianPrice', 'pricePerSqm', 'salesVolume', 'averageDaysOnMarket', 'priceGrowthRate', 'liquidityScore', 'demandScore', 'investmentScore'],
+        description: 'One row per neighborhood+propertyType+period. Supported columns: neighborhood, propertyType, period (YYYY-MM), averagePrice, medianPrice, pricePerSqm, averageRentalPrice, rentalYield, priceGrowth, rentGrowth, activeListings, sampleSize.',
+        exampleColumns: ['neighborhood', 'propertyType', 'period', 'averagePrice', 'medianPrice', 'pricePerSqm', 'averageRentalPrice', 'rentalYield', 'priceGrowth', 'rentGrowth', 'activeListings', 'sampleSize'],
       },
       {
         key: 'neighborhoods',
@@ -323,78 +329,5 @@ router.get('/excel/templates', authenticate, requirePermission('IMPORT_EXCEL'), 
     res.status(500).json({ success: false, message: 'Failed to retrieve excel templates' });
   }
 });
-
-// ----- Helpers -----
-
-function normalizeSheetPreview(sheet: unknown, sheetName: string): ExcelSheetPreview {
-  const rawRows = (Array.isArray(sheet) ? sheet : [])
-    .map((row: unknown) => (Array.isArray(row) ? row : []));
-
-  const headerCandidates = rawRows.length > 0 ? rawRows[0] : [];
-  const headerLabels = (headerCandidates as unknown[]).map((cell: unknown) => (cell == null ? '' : String(cell).trim()))
-    .map((label: string) => (label.length > 0 ? label : null))
-    .filter((label: string | null): label is string => label != null);
-
-  const dataRows = rawRows.slice(1).filter((row: unknown[]) => row.some((cell: unknown) => cell != null));
-
-  return {
-    sheetName,
-    rowCount: rawRows.length,
-    headerLabels,
-    sampleRows: dataRows.slice(0, 5) as unknown[][],
-    columnCount: headerLabels.length,
-    detectedDateColumns: detectDateColumns(dataRows, headerLabels),
-    detectedNumericColumns: detectNumericColumns(dataRows, headerLabels),
-  };
-}
-
-function detectDateColumns(rows: unknown[][], labels: string[]): string[] {
-  const out: string[] = [];
-  for (let c = 0; c < labels.length; c++) {
-    const samples = rows.slice(0, 200).map((r) => r[c] ?? null).filter((v) => v != null);
-    if (samples.length === 0) continue;
-    const hit = samples.some((v: unknown) => {
-      if (v instanceof Date) return true;
-      if (typeof v === 'number') {
-        const d = new Date(v);
-        return !isNaN(d.getTime()) && d.getFullYear() >= 1900 && d.getFullYear() <= 2100;
-      }
-      if (typeof v === 'string') {
-        const trimmed = v.trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return true;
-        if (/^\d{4}-\d{2}$/.test(trimmed)) return true;
-        const ts = Date.parse(v);
-        if (!isNaN(ts)) {
-          const d = new Date(ts);
-          return d.getFullYear() >= 1900 && d.getFullYear() <= 2100;
-        }
-      }
-      return false;
-    });
-    if (hit) out.push(labels[c]);
-  }
-  return out;
-}
-
-function detectNumericColumns(rows: unknown[][], labels: string[]): string[] {
-  const out: string[] = [];
-  for (let c = 0; c < labels.length; c++) {
-    const samples = rows.slice(0, 200).map((r) => r[c] ?? null).filter((v) => v != null);
-    if (samples.length === 0) continue;
-    const hit = samples.some((v: unknown): boolean => {
-      if (typeof v === 'number') return Number.isFinite(v);
-      if (typeof v === 'string') {
-        const cleaned = v.replace(/[,\s]/g, '');
-        if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
-          const n = parseFloat(cleaned);
-          return Number.isFinite(n);
-        }
-      }
-      return false;
-    });
-    if (hit) out.push(labels[c]);
-  }
-  return out;
-}
 
 export default router;

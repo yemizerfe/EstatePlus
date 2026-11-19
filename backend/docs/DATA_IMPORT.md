@@ -190,6 +190,11 @@ The system supports multiple data source types:
 - Multi-sheet support
 - Formula evaluation
 
+Uploaded CSV and Excel rows are stored with their data-source record in
+PostgreSQL before processing begins. Queued workers read the persisted rows by
+source ID, so processing does not depend on a local upload directory or the
+HTTP request's in-memory upload buffer.
+
 ### API Endpoints
 - REST API integration
 - Authentication support

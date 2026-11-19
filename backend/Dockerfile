@@ -1,3 +1,4 @@
+
 # syntax=docker/dockerfile:1.7
 
 # ── Dependencies + Prisma client ─────────────────────────────────────────────
@@ -15,13 +16,13 @@ RUN npm ci
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# ── TypeScript build ────────────────────────────────────────────────────────
+# ── TypeScript build ─────────────────────────────────────────────────────────
 FROM deps AS build
 COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 RUN npm run build
 
-# ── Runtime ─────────────────────────────────────────────────────────────────
+# ── Runtime ──────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runner
 ENV NODE_ENV=production
 
@@ -45,7 +46,7 @@ COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
 
 COPY --from=build /app/dist ./dist
 
-# Avatars are written here at runtime; compose mounts a named volume over it.
+# Create the uploads directory.
 RUN mkdir -p uploads/avatars && chown -R expressjs:nodejs /app
 USER expressjs
 

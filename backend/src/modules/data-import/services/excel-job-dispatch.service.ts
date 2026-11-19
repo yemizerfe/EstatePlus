@@ -1,4 +1,5 @@
 import {v4 as uuidv4} from 'uuid';
+import * as XLSX from 'xlsx';
 import {jobQueueService} from '../../../services/job-queue.service';
 import {prisma} from '../../../infrastructure/database/prisma';
 import {logger} from '../../../shared/utils/logger';
@@ -35,15 +36,11 @@ const IMPORT_TYPE_FOR_TARGET: Record<ExcelMappingEntry['targetType'], string> = 
  * Persist a data source + import job for each sheet the analyst mapped, then
  * schedule the corresponding background import job.
  *
- * We mirror enough job-payload shape for the existing workers so they can pick
- * up the job without the Excel layer needing to know the full entity schema.
- * The actual row data is not persisted here; the workers resolve it from the
- * queue payload + the workbook buffer that the routes layer keeps in memory for
- * the lifetime of the request. If no queue is available we still return the
- * created job so the UI can poll / retry.
+ * The uploaded sheet rows are persisted with their data source so workers can
+ * process them without depending on the request process or local file storage.
  */
 export async function scheduleExcelImportFromPreview(params: {
-  workbook: any;
+  workbook: XLSX.WorkBook;
   mapping: ExcelMappingEntry[];
   userId: string | undefined;
 }): Promise<ExcelImportSchedulingResult | null> {
@@ -64,6 +61,12 @@ export async function scheduleExcelImportFromPreview(params: {
     }
 
     const preview = normalizeSheetPreview(sheet, entry.sheetName);
+    const uploadedRows = XLSX.utils.sheet_to_json<
+      Record<string, string | number | boolean | null>
+    >(sheet, {
+      defval: null,
+      raw: false,
+    });
 
     // 1) Create a DataSource for this upload
     const dataSourceName = entry.dataSourceName ?? `${entry.sourceFileName} :: ${entry.sheetName}`;
@@ -74,6 +77,7 @@ export async function scheduleExcelImportFromPreview(params: {
         sourceType: 'excel_upload',
         createdBy: userId ?? undefined,
         description: `Analyst Excel import — sheet "${entry.sheetName}" → ${entry.targetType}`,
+        metadata: { uploadedRows, sheetName: entry.sheetName },
       },
     });
 
@@ -94,6 +98,7 @@ export async function scheduleExcelImportFromPreview(params: {
         sourceId: dataSource.id,
         jobType,
         status: 'pending',
+        recordsReceived: uploadedRows.length,
         createdBy: userId ?? undefined,
         fileName: entry.sourceFileName,
         errorLog: {
@@ -111,6 +116,16 @@ export async function scheduleExcelImportFromPreview(params: {
 
     // 3) Schedule with the queue service when available
     const scheduled = await tryScheduleJob(jobType, jobId, entry, userId, dataSource.id, jobId);
+    if (!scheduled) {
+      await prisma.dataImportJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'failed',
+          completedAt: new Date(),
+          errorLog: { error: 'The import job could not be scheduled; the uploaded rows remain stored for retry.' },
+        },
+      });
+    }
 
     sheets.push({
       sheetName: entry.sheetName,
@@ -148,7 +163,7 @@ async function tryScheduleJob(
   entry: ExcelMappingEntry,
   userId: string | undefined,
   dataSourceId: string,
-  _jobRecordId: string,
+  jobRecordId: string,
 ): Promise<boolean> {
   try {
     switch (jobType) {
@@ -156,7 +171,7 @@ async function tryScheduleJob(
         return jobQueueService.schedulePropertyImport({
           type: 'PROPERTY_IMPORT',
           sourceId: dataSourceId,
-          fileName: entry.sourceFileName,
+          jobRecordId,
           userId: userId ?? undefined,
           metadata: {
             excelSheetName: entry.sheetName,
@@ -168,7 +183,9 @@ async function tryScheduleJob(
         return jobQueueService.scheduleMarketDataImport({
           type: 'MARKET_DATA_IMPORT',
           dataType: 'market_metrics',
-          period: 'upload',
+          sourceId: dataSourceId,
+          jobRecordId,
+          period: new Date().toISOString().slice(0, 7),
           userId: userId ?? undefined,
           metadata: {
             excelSheetName: entry.sheetName,
@@ -179,6 +196,8 @@ async function tryScheduleJob(
       case 'economic_data_import':
         return jobQueueService.scheduleEconomicDataImport({
           type: 'ECONOMIC_DATA_IMPORT',
+          sourceId: dataSourceId,
+          jobRecordId,
           indicators: [],
           startDate: new Date().toISOString().slice(0, 10),
           endDate: new Date().toISOString().slice(0, 10),
@@ -192,6 +211,8 @@ async function tryScheduleJob(
       case 'neighborhood_data_import':
         return jobQueueService.scheduleNeighborhoodDataImport({
           type: 'NEIGHBORHOOD_DATA_IMPORT',
+          sourceId: dataSourceId,
+          jobRecordId,
           dataTypes: [],
           userId: userId ?? undefined,
           metadata: {

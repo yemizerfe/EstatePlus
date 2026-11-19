@@ -79,8 +79,14 @@ cd estateplus
 
 ```bash
 cp backend/.env.production.example .env
-# then set POSTGRES_PASSWORD, JWT_SECRET and JWT_REFRESH_SECRET in .env
+# then set JWT_SECRET and JWT_REFRESH_SECRET in .env
 ```
+
+For Neon, also set `DATABASE_URL` to Neon’s pooled connection string and
+`DIRECT_URL` to its direct (non-pooled) connection string. Prisma uses the
+direct URL for database migrations. Both connections must target the same Neon
+database and include `sslmode=require`. If these values are blank, Compose uses
+its bundled PostgreSQL container instead.
 
 ### 3. Build and start the application
 
@@ -120,6 +126,12 @@ are never overwritten, and no personal data is included. Set
 Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` to have an admin account created
 on the same boot, so you can sign in and run the integrations' **Sync now**
 actions in the deployed app.
+
+Uploads and imported rows are stored in the configured PostgreSQL database.
+Market pages read from that database; after deploying against Neon, use the
+admin integrations page to sync live source data. The reference snapshot is
+loaded only when the database has no neighborhoods, and will not overwrite
+existing Neon data.
 
 ## Project Structure
 

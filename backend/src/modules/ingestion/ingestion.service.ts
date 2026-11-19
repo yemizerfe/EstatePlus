@@ -13,9 +13,25 @@ export async function initiateImport(
   userId: string,
   importType: 'properties' | 'economics',
 ) {
-  // Create import job record
+  // Parse the upload before writing DB records so malformed CSV does not leave
+  // behind an orphan data source or import job.
+  const rows: Record<string, string>[] = [];
+  await new Promise<void>((resolve, reject) => {
+    const stream = Readable.from(fileBuffer.toString('utf8'));
+    stream
+      .pipe(csvParser())
+      .on('data', (row: Record<string, string>) => rows.push(row))
+      .on('end', resolve)
+      .on('error', reject);
+  });
+
   const source = await prisma.dataSource.create({
-    data: { name: fileName, sourceType: 'csv', createdBy: userId },
+    data: {
+      name: fileName,
+      sourceType: 'csv',
+      createdBy: userId,
+      metadata: { uploadedRows: rows },
+    },
   });
 
   const job = await prisma.dataImportJob.create({
@@ -28,30 +44,17 @@ export async function initiateImport(
     },
   });
 
-  // Parse CSV in-memory to get record count
-  const rows: Record<string, string>[] = [];
-  await new Promise<void>((resolve, reject) => {
-    const stream = Readable.from(fileBuffer.toString('utf8'));
-    stream
-      .pipe(csvParser())
-      .on('data', (row: Record<string, string>) => rows.push(row))
-      .on('end', resolve)
-      .on('error', reject);
-  });
-
   await prisma.dataImportJob.update({
     where: { id: job.id },
     data: { recordsReceived: rows.length },
   });
 
-  // Hand the parsed rows to the property importer. When RabbitMQ is down the
-  // job queue runs the import in-process instead of dropping the work.
+  // The parsed upload is already in Postgres, so workers can recover it by
+  // sourceId even if the request process or broker restarts.
   if (importType === 'properties') {
     const scheduled = await jobQueueService.schedulePropertyImport({
       type: 'PROPERTY_IMPORT',
       sourceId: source.id,
-      fileName,
-      data: rows,
       userId,
       jobRecordId: job.id,
       options: { skipDuplicates: true },

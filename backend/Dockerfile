@@ -55,12 +55,9 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=5 \
   CMD node -e "fetch('http://127.0.0.1:5000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-# Migrations run on every boot and are idempotent, so a fresh volume and an
-# existing one behave the same.
-# Migrations run first, then the reference dataset is loaded into an empty
-# database (no-op once neighbourhoods exist), then the API starts. A failing
-# data import must not keep the API offline, so that step is allowed to fail.
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && (node dist/bootstrap/reference-data.cli.js || echo '[bootstrap] reference data import failed; starting API anyway') && node dist/index.js"]
+# Migrations run first. The API then bootstraps an empty database before it
+# begins listening, and exits visibly if the reference dataset cannot load.
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/index.js"]
 
 # Optional out-of-process background worker (docker compose --profile workers).
 FROM runner AS worker

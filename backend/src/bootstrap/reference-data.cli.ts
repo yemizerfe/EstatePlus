@@ -2,9 +2,8 @@ import { prisma } from '../infrastructure/database/prisma';
 import { bootstrapReferenceData } from './reference-data';
 
 /**
- * Runs before the API starts (see the CMD in backend/Dockerfile):
- * applies reference data to an empty production database and creates the
- * first admin account when ADMIN_EMAIL / ADMIN_PASSWORD are configured.
+ * Optional command-line entrypoint for applying reference data manually.
+ * Normal API startup also calls bootstrapReferenceData after connecting.
  */
 bootstrapReferenceData()
   .then(async () => {

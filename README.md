@@ -116,12 +116,18 @@ docker compose down -v
 
 ### 5. First boot on an empty database
 
-The API applies the reference dataset that ships with the server image
+The API applies the reference dataset that ships with the server build
 (`backend/prisma/seed-data/reference-data.json`: neighbourhoods, listings, market
 statistics, economic and macro indicators, exchange rates, amenities, boundaries)
 the first time it starts against a database with no neighbourhoods. Existing rows
 are never overwritten, and no personal data is included. Set
 `REFERENCE_DATA_BOOTSTRAP=off` in `.env` to skip this.
+
+For non-Docker deployments, run `npm run db:migrate` from `backend/` as a
+pre-deploy/release command before starting the API with `npm start` (or use
+`npm run start:deploy` when the host supports a single start command). The API
+then bootstraps an empty database before listening. `DATABASE_URL` and
+`DIRECT_URL` must be available to the migration command.
 
 Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` to have an admin account created
 on the same boot, so you can sign in and run the integrations' **Sync now**

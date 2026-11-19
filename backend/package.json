@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
+    "start:deploy": "npm run db:migrate && npm start",
     "worker": "tsx src/workers/index.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",

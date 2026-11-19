@@ -8,11 +8,17 @@ import {
   deriveMarketStatistics,
 } from './modules/market/market-stats-derivation.service';
 import { logger } from './shared/utils/logger';
+import { bootstrapReferenceData } from './bootstrap/reference-data';
 
 async function bootstrap(): Promise<void> {
   // Verify database connection
   await prisma.$connect();
   logger.info('Database connected');
+
+  // Populate an empty deployment before serving requests. This is also run
+  // outside Docker, where the image entrypoint is not used.
+  const referenceData = await bootstrapReferenceData();
+  logger.info({ msg: 'Reference data bootstrap completed', ...referenceData });
 
   // Connect Redis (non-fatal if unavailable)
   await getRedis();

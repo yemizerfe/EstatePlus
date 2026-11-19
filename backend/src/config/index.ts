@@ -1,3 +1,4 @@
+
 import * as dotenv from 'dotenv';
 import { z } from 'zod';
 
@@ -24,6 +25,10 @@ const envSchema = z.object({
   REDIS_TTL: z.string().default('300').transform(Number),
 
   // RabbitMQ
+  RABBITMQ_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
   RABBITMQ_URL: z.string().default('amqp://guest:guest@localhost:5672'),
 
   // Kafka
@@ -51,8 +56,6 @@ const envSchema = z.object({
 
   // Rate limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
-  // A single dashboard view fans out into a dozen API calls, so the ceiling has
-  // to leave room for normal browsing behind one shared NAT address.
   RATE_LIMIT_MAX: z.string().default('600').transform(Number),
 
   // CORS
@@ -62,15 +65,19 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 
-// Empty values in .env (e.g. `PORT=`) mean "not set". Without this, an empty
-// string wins over the schema default and can coerce to 0 or an empty URL.
+// Empty values in .env mean "not set".
 const rawEnv: NodeJS.ProcessEnv = { ...process.env };
+
 for (const key of Object.keys(rawEnv)) {
-  if (rawEnv[key] === '') delete rawEnv[key];
+  if (rawEnv[key] === '') {
+    delete rawEnv[key];
+  }
 }
-// `PORT=0` means "any free port" to Node, which silently breaks clients that
-// expect the documented port. Treat it as unset so the default applies.
-if (rawEnv.PORT === '0') delete rawEnv.PORT;
+
+// PORT=0 means "any free port", which is unsuitable for deployment.
+if (rawEnv.PORT === '0') {
+  delete rawEnv.PORT;
+}
 
 const parsed = envSchema.safeParse(rawEnv);
 

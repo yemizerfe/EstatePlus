@@ -56,7 +56,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=5 \
 
 # Migrations run on every boot and are idempotent, so a fresh volume and an
 # existing one behave the same.
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/index.js"]
+# Migrations run first, then the reference dataset is loaded into an empty
+# database (no-op once neighbourhoods exist), then the API starts. A failing
+# data import must not keep the API offline, so that step is allowed to fail.
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && (node dist/bootstrap/reference-data.cli.js || echo '[bootstrap] reference data import failed; starting API anyway') && node dist/index.js"]
 
 # Optional out-of-process background worker (docker compose --profile workers).
 FROM runner AS worker

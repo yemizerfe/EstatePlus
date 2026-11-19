@@ -151,7 +151,8 @@ router.get('/audit-logs', [
   query('startDate').optional().isISO8601(),
   query('endDate').optional().isISO8601(),
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
+  // The audit page fetches 200 rows and paginates client-side.
+  query('limit').optional().isInt({ min: 1, max: 200 }),
   validate
 ], async (req: Request, res: Response): Promise<void> => {
   const filters = {

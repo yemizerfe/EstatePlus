@@ -46,15 +46,18 @@ router.get(
   '/',
   [
     query('unreadOnly').optional().isBoolean(),
+    // Older clients send `unread`; both names filter the same thing.
+    query('unread').optional().isBoolean(),
     query('type').optional().isIn(['SYSTEM', 'PROPERTY', 'ALERT', 'MARKET', 'ANALYSIS', 'FORECAST', 'NOTICE']),
     query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 50 }),
+    // The notifications page loads a larger first page for client-side filtering.
+    query('limit').optional().isInt({ min: 1, max: 100 }),
     validate,
   ],
   async (req: Request, res: Response) => {
     const userId = (req as AuthenticatedRequest).user.sub;
     const result = await notificationService.listNotifications(userId, {
-      unreadOnly: req.query['unreadOnly'] === 'true',
+      unreadOnly: req.query['unreadOnly'] === 'true' || req.query['unread'] === 'true',
       type: req.query['type'] as any,
       page: req.query['page'] ? Number(req.query['page']) : 1,
       limit: req.query['limit'] ? Number(req.query['limit']) : 20,

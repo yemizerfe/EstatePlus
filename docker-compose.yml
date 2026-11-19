@@ -57,6 +57,11 @@ services:
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      # First boot on an empty database: load the shipped reference data and
+      # create an admin login when ADMIN_EMAIL / ADMIN_PASSWORD are set.
+      REFERENCE_DATA_BOOTSTRAP: ${REFERENCE_DATA_BOOTSTRAP:-on}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-600}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:

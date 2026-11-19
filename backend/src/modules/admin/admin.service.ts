@@ -142,11 +142,17 @@ export async function getSystemHealth() {
     {
       name: 'RabbitMQ',
       icon: 'message',
-      status: rabbit.ok ? 'operational' : 'down',
+      // RabbitMQ is optional: the API runs its job queue in-process without it.
+      // Only report `down` when a broker was actually configured and failed.
+      status: rabbit.ok ? 'operational' : process.env['RABBITMQ_URL'] ? 'down' : 'degraded',
       latency: rabbit.ok ? `${rabbit.latencyMs}ms` : 'N/A',
       lastCheck: now,
       version: '—',
-      details: rabbit.ok ? 'Broker reachable' : 'Unreachable — jobs run in-process',
+      details: rabbit.ok
+        ? 'Broker reachable'
+        : process.env['RABBITMQ_URL']
+          ? 'Unreachable — jobs run in-process'
+          : 'Not configured — jobs run in-process',
     },
     {
       name: 'Import queue',

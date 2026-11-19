@@ -30,7 +30,7 @@ export async function fetchNotifications(opts: {
   const params = new URLSearchParams();
   if (opts.page) params.set('page', String(opts.page));
   if (opts.limit) params.set('limit', String(opts.limit));
-  if (opts.unreadOnly) params.set('unread', 'true');
+  if (opts.unreadOnly) params.set('unreadOnly', 'true');
   // The notifications route answers with `items`/`unreadCount` at the top
   // level; older clients wrapped them in `data`, so both shapes are accepted.
   const { data } = await apiClient.get<

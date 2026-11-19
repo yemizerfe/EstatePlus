@@ -108,6 +108,19 @@ docker compose down -v
 
 > The exact services, ports, and environment variables depend on the Docker Compose configuration included in this repository.
 
+### 5. First boot on an empty database
+
+The API applies the reference dataset that ships with the server image
+(`backend/prisma/seed-data/reference-data.json`: neighbourhoods, listings, market
+statistics, economic and macro indicators, exchange rates, amenities, boundaries)
+the first time it starts against a database with no neighbourhoods. Existing rows
+are never overwritten, and no personal data is included. Set
+`REFERENCE_DATA_BOOTSTRAP=off` in `.env` to skip this.
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` to have an admin account created
+on the same boot, so you can sign in and run the integrations' **Sync now**
+actions in the deployed app.
+
 ## Project Structure
 
 ```text

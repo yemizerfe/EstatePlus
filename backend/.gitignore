@@ -25,3 +25,45 @@ tmp_*
 tsc-*.json
 coverage/
 .nyc_output/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+uploads/*
+!uploads/.gitkeep
+
+# Cache and temporary files
+.cache/
+.tmp/
+temp/
+*.tsbuildinfo
+
+# Testing artifacts
+.nyc_output/
+
+# IDE and OS files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Prisma local development artifacts
+prisma/*.db

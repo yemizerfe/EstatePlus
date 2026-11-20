@@ -4,6 +4,10 @@ EstatePlus is a real estate market intelligence platform designed to organize pr
 
 The platform brings together property information, market indicators, and external data sources to make real estate information easier to manage, explore, and understand.
 
+## Live Deployment
+
+[EstatePlus — Live Application](https://estateplus-realestate-intelligence.netlify.app)
+
 ## Features
 
 - Property listing and data management
@@ -73,7 +77,7 @@ Install:
 ```bash
 git clone https://github.com/yemizerfe/EstatePlus.git
 cd estateplus
-``` 
+```
 
 ### 2. Configure the environment
 
@@ -166,7 +170,6 @@ To view application logs:
 ```bash
 docker compose logs -f
 ```
-
 
 ## Project Goals
 

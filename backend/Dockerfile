@@ -62,3 +62,4 @@ CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node
 # Optional out-of-process background worker (docker compose --profile workers).
 FROM runner AS worker
 CMD ["node", "dist/workers/index.js"]
+FROM runner AS production
